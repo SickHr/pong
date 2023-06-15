@@ -7,7 +7,8 @@ WINDOW_WIDTH, WINDOW_HEIGHT = 640, 480
 PADDLE_WIDTH, PADDLE_HEIGHT = 10, 60
 BALL_SIZE = 20
 PADDLE_SPEED = 5
-BALL_SPEED_X, BALL_SPEED_Y = 3, 2
+AI_SPEED = 4
+BALL_SPEED_X, BALL_SPEED_Y = 6, 4
 WHITE = (255, 255, 255)
 
 # Initialize Pygame
@@ -34,16 +35,18 @@ while True:
             pygame.quit()
             sys.exit()
 
-    # Move paddles
+    # Move paddle A
     keys = pygame.key.get_pressed()
-    if keys[K_w]:
+    if keys[K_w] and paddle_a.top > 0:
         paddle_a.move_ip(0, -PADDLE_SPEED)
-    if keys[K_s]:
+    if keys[K_s] and paddle_a.bottom < WINDOW_HEIGHT:
         paddle_a.move_ip(0, PADDLE_SPEED)
-    if keys[K_UP]:
-        paddle_b.move_ip(0, -PADDLE_SPEED)
-    if keys[K_DOWN]:
-        paddle_b.move_ip(0, PADDLE_SPEED)
+
+    # Simple AI for paddle B
+    if ball.centery > paddle_b.centery and paddle_b.bottom < WINDOW_HEIGHT:
+        paddle_b.move_ip(0, AI_SPEED)
+    elif ball.centery < paddle_b.centery and paddle_b.top > 0:
+        paddle_b.move_ip(0, -AI_SPEED)
 
     # Move the ball
     ball.move_ip(ball_dir_x, ball_dir_y)
@@ -51,12 +54,19 @@ while True:
     # Collision detection
     if ball.top <= 0 or ball.bottom >= WINDOW_HEIGHT:
         ball_dir_y = -ball_dir_y
-    if ball.colliderect(paddle_a) or ball.colliderect(paddle_b):
-        ball_dir_x = -ball_dir_x
+    if ball.colliderect(paddle_a):
+        ball_dir_x = abs(ball_dir_x)
+        diff = (paddle_a.centery - ball.centery) / (PADDLE_HEIGHT / 2)
+        ball_dir_y -= diff
+    if ball.colliderect(paddle_b):
+        ball_dir_x = -abs(ball_dir_x)
+        diff = (paddle_b.centery - ball.centery) / (PADDLE_HEIGHT / 2)
+        ball_dir_y -= diff
     if ball.left <= 0 or ball.right >= WINDOW_WIDTH:
         ball.x = WINDOW_WIDTH // 2 - BALL_SIZE // 2
         ball.y = WINDOW_HEIGHT // 2 - BALL_SIZE // 2
         ball_dir_x = BALL_SPEED_X
+        ball_dir_y = BALL_SPEED_Y
 
     # Clear screen
     window.fill((0, 0, 0))
